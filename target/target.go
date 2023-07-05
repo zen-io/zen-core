@@ -33,6 +33,7 @@ type Target struct {
 	Name         string
 	Srcs         map[string][]string
 	Outs         []string
+	TransformOut func(target *Target, o string) (string, bool)
 	Labels       []string
 	Hashes       []string
 	Visibility   []string
@@ -197,6 +198,12 @@ func (target *Target) EnsureValidTarget() error {
 	}
 
 	sort.Strings(target.Labels)
+
+	if target.TransformOut == nil {
+		target.TransformOut = func(target *Target, o string) (string, bool) {
+			return o, true
+		}
+	}
 	return nil
 }
 

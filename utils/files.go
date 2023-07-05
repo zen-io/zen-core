@@ -188,3 +188,11 @@ func GlobPath(root, path string) (map[string]string, error) {
 
 	return expanded, nil
 }
+
+func FileExtension(p string) string {
+	if strings.HasSuffix(p, ".tar.gz") {
+		return ".tar.gz"
+	} else {
+		return filepath.Ext(p)
+	}
+}

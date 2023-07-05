@@ -104,6 +104,13 @@ func WithOuts(outs []string) func(*Target) error {
 	}
 }
 
+func WithTransformOut(fn func(target *Target, o string) (string, bool)) func(*Target) error {
+	return func(s *Target) error {
+		s.TransformOut = fn
+		return nil
+	}
+}
+
 func WithBinary() func(*Target) error {
 	return func(s *Target) error {
 		s.Binary = true
