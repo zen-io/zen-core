@@ -70,6 +70,16 @@ func NewFqnFromStr(stepFqn string) (*QualifiedTargetName, error) {
 	return fqn, nil
 }
 
+func NewFqnFromStrWithDefault(stepFqn, defaultScript string) (*QualifiedTargetName, error) {
+	fqn, err := NewFqnFromStr(stepFqn)
+	if err != nil {
+		return nil, err
+	}
+	fqn.SetDefaultScript(defaultScript)
+
+	return fqn, nil
+}
+
 func NewFqnFromParts(proj, pkg, name, script string) *QualifiedTargetName {
 	return &QualifiedTargetName{
 		project: proj,

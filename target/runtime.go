@@ -2,7 +2,6 @@ package target
 
 import (
 	"fmt"
-	"os"
 
 	environs "github.com/zen-io/zen-core/environments"
 	"github.com/zen-io/zen-core/utils"
@@ -11,9 +10,6 @@ import (
 )
 
 type RuntimeContext struct {
-	Variables    map[string]string
-	Environments map[string]*environs.Environment
-
 	DryRun   bool
 	Debug    bool
 	Clean    bool
@@ -45,7 +41,7 @@ func (tcc *TargetConfigContext) ResolveToolchain(provided *string, name string, 
 	return
 }
 
-func NewRuntimeContext(flags *pflag.FlagSet, envs map[string]*environs.Environment, path, hostOS, hostArch string) *RuntimeContext {
+func NewRuntimeContext(flags *pflag.FlagSet, path, hostOS, hostArch string) *RuntimeContext {
 	var env, tag string
 	var dryRun, debug, clean, withDeps bool
 
@@ -58,26 +54,13 @@ func NewRuntimeContext(flags *pflag.FlagSet, envs map[string]*environs.Environme
 	shell, _ := flags.GetBool("shell")
 
 	return &RuntimeContext{
-		Env:          env,
-		Tag:          tag,
-		DryRun:       dryRun,
-		Debug:        debug,
-		Clean:        clean,
-		WithDeps:     withDeps,
-		Shell:        shell,
-		Environments: envs,
-		Variables: map[string]string{
-			"USER":            os.Getenv("USER"),
-			"HOME":            os.Getenv("HOME"),
-			"SHLVL":           "1",
-			"PATH":            fmt.Sprintf("%s:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin", path),
-			"ENV":             env,
-			"TAG":             tag,
-			"TARGET.OS":       hostOS,
-			"TARGET.ARCH":     hostArch,
-			"CONFIG.HOSTOS":   hostOS,
-			"CONFIG.HOSTARCH": hostArch,
-		},
+		Env:      env,
+		Tag:      tag,
+		DryRun:   dryRun,
+		Debug:    debug,
+		Clean:    clean,
+		WithDeps: withDeps,
+		Shell:    shell,
 	}
 }
 
