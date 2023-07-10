@@ -18,10 +18,6 @@ func (t *Target) Path() string {
 	return t._original_path
 }
 
-func (t *Target) ShouldClean() bool {
-	return t._clean
-}
-
 func (t *Target) StripCwd(s string) string {
 	return strings.TrimPrefix(s, t.Cwd+"/")
 }

@@ -2,7 +2,9 @@ package target
 
 import (
 	"fmt"
+	"os/exec"
 	"sort"
+	"strings"
 
 	environs "github.com/zen-io/zen-core/environments"
 	"github.com/zen-io/zen-core/utils"
@@ -23,6 +25,7 @@ type TargetCreatorMap map[string]TargetCreator
 type TargetScript struct {
 	Alias      []string
 	Deps       []string
+	Env        map[string]string
 	Pre        func(target *Target, runCtx *RuntimeContext) error
 	Post       func(target *Target, runCtx *RuntimeContext) error
 	Run        func(target *Target, runCtx *RuntimeContext) error
@@ -47,6 +50,7 @@ type Target struct {
 	Scripts      map[string]*TargetScript
 	Binary       bool
 	External     bool
+	Clean        bool
 
 	noInterpolation bool
 	flattenOuts     bool
@@ -54,7 +58,6 @@ type Target struct {
 	// This will be filled up by the engine
 	*QualifiedTargetName
 	_original_path string
-	_clean         bool
 
 	out_mgr.TaskLogger
 	Cwd string
@@ -79,7 +82,7 @@ func NewTarget(name string, opts ...TargetOption) *Target {
 		Scripts: map[string]*TargetScript{
 			"build": {},
 		},
-		_clean:         false,
+		Clean:          false,
 		_original_path: "",
 		Cwd:            "",
 	}
@@ -209,4 +212,16 @@ func (target *Target) EnsureValidTarget() error {
 
 func (t *Target) Fqn() string {
 	return t.Qn()
+}
+
+func (t *Target) Exec(command []string, errorMsg string) error {
+	t.Debugln(strings.Join(command, " "))
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Dir = t.Cwd
+	cmd.Env = t.GetEnvironmentVariablesList()
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%s: %s", errorMsg, out)
+	}
+	return nil
 }
