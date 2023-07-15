@@ -38,7 +38,7 @@ func InterpolateMapWithItself(toInterpolate map[string]string) (map[string]strin
 }
 
 func Interpolate(text string, vars map[string]string) (string, error) {
-	re := regexp.MustCompile(`\{[A-Z\.\_]+\}`)
+	re := regexp.MustCompile(`\{[A-Za-z\.\_]+\}`)
 	var err error
 	var needsInterpolation bool
 
