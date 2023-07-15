@@ -1,0 +1,6 @@
+# CHANGELOG
+
+## 0.0.3
+
+- [BREAKING] ENV variable was moved to DEPLOY_ENV. using the former resulted in an attempt to execute an environment file referenced by the variable
+- [fix] regex for environment replacement now supports lower case characters in variables

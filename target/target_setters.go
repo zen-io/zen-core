@@ -46,7 +46,7 @@ func (target *Target) SetDeployVariables(env string, proj, cli map[string]string
 		return fmt.Errorf("loading environment: %w", err)
 	}
 
-	target.Env, err = utils.InterpolateMapWithItself(utils.MergeMaps(proj, cli, target.Env, targetDeployEnv, map[string]string{"ENV": env}))
+	target.Env, err = utils.InterpolateMapWithItself(utils.MergeMaps(proj, cli, target.Env, targetDeployEnv, map[string]string{"DEPLOY_ENV": env}))
 
 	return
 }
