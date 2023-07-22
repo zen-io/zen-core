@@ -11,7 +11,7 @@ func (t *Target) ShouldFlattenOuts() bool {
 }
 
 func (t *Target) ShouldInterpolate() bool {
-	return !t.noInterpolation
+	return !t.InterpolateInBuild
 }
 
 func (t *Target) Path() string {

@@ -3,6 +3,7 @@ package target
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	environs "github.com/zen-io/zen-core/environments"
 	"github.com/zen-io/zen-core/utils"
@@ -46,7 +47,7 @@ func (target *Target) SetDeployVariables(env string, proj, cli map[string]string
 		return fmt.Errorf("loading environment: %w", err)
 	}
 
-	target.Env, err = utils.InterpolateMapWithItself(utils.MergeMaps(proj, cli, target.Env, targetDeployEnv, map[string]string{"DEPLOY_ENV": env}))
+	target.Env, err = utils.InterpolateMapWithItself(utils.MergeMaps(proj, cli, target.Env, targetDeployEnv, map[string]string{"DEPLOY_ENV": env, "ENV": env}))
 
 	return
 }
@@ -66,4 +67,43 @@ func (target *Target) ExpandEnvironments(envs ...map[string]*environs.Environmen
 	}
 
 	target.Environments = mergedEnvs
+}
+
+func ToTarget(m TargetCreator) (*Target) {
+	t := &Target{}
+
+	_ = CopyTargetFields(&m, t)
+
+	return t
+}
+
+func CopyTargetFields(from, to interface{}) error {
+	fromVal := reflect.ValueOf(from)
+	toVal := reflect.ValueOf(to)
+
+	if fromVal.Kind() != reflect.Ptr || fromVal.IsNil() {
+		return fmt.Errorf("'from' needs to be a pointer")
+	} else {
+		fromVal = fromVal.Elem()
+	}
+	if toVal.Kind() != reflect.Ptr || toVal.IsNil() {
+		return fmt.Errorf("'to' needs to be a pointer")
+	} else {
+		toVal = toVal.Elem()
+	}
+
+	typeOfA := fromVal.Type()
+
+	for i := 0; i < fromVal.NumField(); i++ {
+		// Check if zen tag is set to "yes"
+		if zenTag := typeOfA.Field(i).Tag.Get("zen"); zenTag == "yes" {
+			// Check if field exists in struct B
+			fieldB := toVal.FieldByName(typeOfA.Field(i).Name)
+			if fieldB.IsValid() && fieldB.CanSet() {
+				fieldB.Set(fromVal.Field(i))
+			}
+		}
+	}
+
+	return nil
 }

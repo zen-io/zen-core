@@ -52,7 +52,7 @@ type Target struct {
 	External     bool
 	Clean        bool
 
-	noInterpolation bool
+	NoCacheInterpolation bool
 	flattenOuts     bool
 
 	// This will be filled up by the engine
@@ -78,7 +78,7 @@ func NewTarget(name string, opts ...TargetOption) *Target {
 		Local:           true,
 		Description:     "",
 		Binary:          false,
-		noInterpolation: false,
+		NoCacheInterpolation: false,
 		Scripts: map[string]*TargetScript{
 			"build": {},
 		},
@@ -181,17 +181,8 @@ func (target *Target) EnsureValidTarget() error {
 		target.Scripts["build"].Run = func(target *Target, runCtx *RuntimeContext) error {
 			for _, sSrcs := range target.Srcs {
 				for _, src := range sSrcs {
-					from := src
-					to := src
-
-					if target.ShouldInterpolate() {
-						if err := utils.CopyWithInterpolate(from, to, target.EnvVars()); err != nil {
-							return err
-						}
-					} else {
-						if err := utils.Copy(from, to); err != nil {
-							return err
-						}
+					if err := target.Copy(src, src); err != nil {
+						return err
 					}
 				}
 			}
@@ -221,7 +212,19 @@ func (t *Target) Exec(command []string, errorMsg string) error {
 	cmd.Env = t.GetEnvironmentVariablesList()
 
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("%s: %s", errorMsg, out)
+		return fmt.Errorf("%s: %w (%s)", errorMsg, err, out)
 	}
+	return nil
+}
+
+func (t *Target) Copy(from, to string, customVars ...map[string]string) error {
+	if t.ShouldInterpolate() {
+		if err := utils.CopyWithInterpolate(from, to, append([]map[string]string{t.EnvVars()}, customVars...)...); err != nil {
+			return fmt.Errorf("interpolating while copying from %s to %s: %w", from, to, err)
+		}
+	} else if from != to {
+		return utils.CopyFile(from, to)
+	}
+
 	return nil
 }

@@ -13,9 +13,9 @@ func WithPublicVisibility() func(*Target) error {
 	}
 }
 
-func WithNoInterpolation() func(*Target) error {
+func WithInterpolateInBuild() func(*Target) error {
 	return func(s *Target) error {
-		s.noInterpolation = true
+		s.InterpolateInBuild = true
 		return nil
 	}
 }
