@@ -10,6 +10,7 @@ func PrettyPrint(m interface{}) error {
 		return err
 	} else {
 		fmt.Print(b)
+		fmt.Println()
 		return nil
 	}
 }

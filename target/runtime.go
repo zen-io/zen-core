@@ -1,22 +1,21 @@
 package target
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/spf13/pflag"
 	environs "github.com/zen-io/zen-core/environments"
 	"github.com/zen-io/zen-core/utils"
-
-	"github.com/spf13/pflag"
 )
 
 type RuntimeContext struct {
-	DryRun   bool
-	Debug    bool
-	Clean    bool
-	WithDeps bool
-	Env      string
-	Tag      string
-	Shell    bool
+	Context         context.Context
+	DryRun          bool
+	Env             string
+	Tag             string
+	WithDeps        bool
+	UseEnvironments bool
 }
 
 type TargetConfigContext struct {
@@ -41,32 +40,27 @@ func (tcc *TargetConfigContext) ResolveToolchain(provided *string, name string, 
 	return
 }
 
-func NewRuntimeContext(flags *pflag.FlagSet, path, hostOS, hostArch string) *RuntimeContext {
+func NewRuntimeContext(flags *pflag.FlagSet) *RuntimeContext {
 	var env, tag string
-	var dryRun, debug, clean, withDeps bool
+	var dryRun bool
 
 	env, _ = flags.GetString("env")
 	tag, _ = flags.GetString("tag")
 	dryRun, _ = flags.GetBool("dry-run")
-	clean, _ = flags.GetBool("clean")
-	debug, _ = flags.GetBool("debug")
-	withDeps, _ = flags.GetBool("with-deps")
-	shell, _ := flags.GetBool("shell")
+	noDeps, _ := flags.GetBool("no-deps")
 
 	return &RuntimeContext{
-		Env:      env,
-		Tag:      tag,
-		DryRun:   dryRun,
-		Debug:    debug,
-		Clean:    clean,
-		WithDeps: withDeps,
-		Shell:    shell,
+		Context: context.Background(),
+		Env:     env,
+		Tag:     tag,
+		DryRun:  dryRun,
+		WithDeps: !noDeps,
 	}
 }
 
 func (target *Target) GetEnvironmentVariablesList(additionalVars ...map[string]string) []string {
 	envVarList := []string{}
-	for k, v := range utils.MergeMaps(append([]map[string]string{target.EnvVars()}, additionalVars...)...) {
+	for k, v := range utils.MergeMaps(append([]map[string]string{target.Env}, additionalVars...)...) {
 		if v != "" && k != "ENV" { // ENV is a special variable in sh, that causes it to execute a script. We need to consider renaming.
 			envVarList = append(envVarList, fmt.Sprintf("%s=%s", k, v))
 		}

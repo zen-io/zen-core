@@ -1,6 +1,8 @@
 package environments
 
-import "github.com/zen-io/zen-core/utils"
+import (
+	"github.com/zen-io/zen-core/utils"
+)
 
 type EnvironmentConfig[T any] interface {
 	EnvVars() map[string]string
@@ -13,7 +15,7 @@ type Environment struct {
 	Variables  map[string]string        `mapstructure:"variables"`
 }
 
-func (envConfig *Environment) EnvVarsForEnv() (map[string]string, error) {
+func (envConfig *Environment) Env() map[string]string {
 	awsEnv := make(map[string]string)
 	k8sEnv := make(map[string]string)
 
@@ -25,5 +27,5 @@ func (envConfig *Environment) EnvVarsForEnv() (map[string]string, error) {
 		k8sEnv = envConfig.Kubernetes.EnvVars()
 	}
 
-	return utils.MergeMaps(awsEnv, k8sEnv, envConfig.Variables), nil
+	return utils.MergeMaps(awsEnv, k8sEnv, envConfig.Variables)
 }
