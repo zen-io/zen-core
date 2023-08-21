@@ -1,7 +1,9 @@
 package target
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/zen-io/zen-core/utils"
 )
@@ -11,62 +13,31 @@ func IsTargetReference(text string) bool {
 	return regexp.MustCompile(`^(\/\/|:)`).MatchString(text)
 }
 
+func (t *Target) StripCwd(s string) string {
+	return strings.TrimPrefix(s, t.Cwd+"/")
+}
+
 func (target *Target) Interpolate(text string, custom ...map[string]string) (string, error) {
 	interpolateVars := utils.MergeMaps(
-		append([]map[string]string{target.EnvVars()}, custom...)...,
+		append([]map[string]string{target.Env}, custom...)...,
 	)
 
 	return utils.Interpolate(text, interpolateVars)
 }
 
-func (target *Target) InterpolateMyself(runCtx *RuntimeContext) error {
-	srcs := map[string][]string{}
-	for sName, sSrcs := range target.Srcs {
-		srcs[sName] = make([]string, 0)
+func InferArrayRefs(arr []string, proj, pkg, script string) ([]string, error) {
+	result := make([]string, 0)
 
-		for _, src := range sSrcs {
-			if interpolatedSrc, err := target.Interpolate(src); err != nil {
-				return err
+	for _, item := range arr {
+		if IsTargetReference(item) { // src is a reference
+			if refFqn, err := InferFqn(item, proj, pkg, script); err != nil {
+				return nil, fmt.Errorf("ref %s not valid: %w", item, err)
 			} else {
-				srcs[sName] = append(srcs[sName], interpolatedSrc)
+				result = append(result, refFqn.Fqn())
 			}
-		}
-	}
-
-	target.Srcs = srcs
-
-	outs := make([]string, 0)
-	for _, o := range target.Outs {
-		if interpolatedOut, err := target.Interpolate(o); err != nil {
-			return err
 		} else {
-			outs = append(outs, interpolatedOut)
+			result = append(result, item)
 		}
 	}
-	target.Outs = outs
-
-	for _, script := range target.Scripts {
-		deps := []string{}
-
-		for _, dep := range target.Scripts["build"].Deps {
-			if interpolatedDep, err := target.Interpolate(dep); err != nil {
-				return err
-			} else {
-				deps = append(deps, interpolatedDep)
-			}
-		}
-		script.Deps = deps
-	}
-
-	tools := map[string]string{}
-	for toolName, toolValue := range target.Tools {
-		if interpolatedTool, err := target.Interpolate(toolValue); err != nil {
-			return err
-		} else {
-			tools[toolName] = interpolatedTool
-		}
-	}
-	target.Tools = tools
-
-	return nil
+	return result, nil
 }

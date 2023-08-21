@@ -11,6 +11,7 @@ type QualifiedTargetName struct {
 	pkg     string
 	name    string
 	script  string
+	Test string
 }
 
 func (fqn *QualifiedTargetName) Project() string {
@@ -89,12 +90,15 @@ func NewFqnFromParts(proj, pkg, name, script string) *QualifiedTargetName {
 	}
 }
 
-func InferFqn(target, proj, pkg, defaultScript string) (fqn *QualifiedTargetName, err error) {
+func InferFqn(target, proj, pkg, defaultScript string) (*QualifiedTargetName, error) {
 	if strings.HasPrefix(target, ":") {
 		target = fmt.Sprintf("//%s/%s%s", proj, pkg, target)
 	}
 
-	fqn, err = NewFqnFromStr(target)
+	fqn, err := NewFqnFromStr(target)
+	if err != nil {
+		return nil, err
+	}
 	fqn.SetDefaultScript(defaultScript)
-	return
+	return fqn, nil
 }

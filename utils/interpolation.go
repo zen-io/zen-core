@@ -9,7 +9,7 @@ import (
 )
 
 func InterpolateMapWithItself(toInterpolate map[string]string) (map[string]string, error) {
-	re := regexp.MustCompile(`\{[A-Z\.\_]+\}`)
+	re := regexp.MustCompile(`([^$]|^)\{[A-Za-z\.\_]+\}`)
 	var err error
 	needsInterpolation := true
 
@@ -22,10 +22,19 @@ func InterpolateMapWithItself(toInterpolate map[string]string) (map[string]strin
 			}
 
 			toInterpolate[key] = re.ReplaceAllStringFunc(val, func(m string) string {
+				var ret string
+
+				if strings.HasPrefix(m, "{") {
+					ret = ""
+				} else {
+					ret = fmt.Sprintf("%c", m[0])
+					m = m[1:]
+				}
+
 				if val, ok := toInterpolate[m[1:len(m)-1]]; !ok {
 					err = fmt.Errorf("%s is not a valid interpolation var", m)
 				} else {
-					return val
+					return fmt.Sprintf("%s%s", ret, val)
 				}
 
 				return ""
@@ -38,17 +47,26 @@ func InterpolateMapWithItself(toInterpolate map[string]string) (map[string]strin
 }
 
 func Interpolate(text string, vars map[string]string) (string, error) {
-	re := regexp.MustCompile(`\{[A-Za-z\.\_]+\}`)
+	re := regexp.MustCompile(`([^$]|^)\{[A-Za-z\.\_]+\}`)
 	var err error
 	var needsInterpolation bool
 
 	retString := text
 	for needsInterpolation = true; needsInterpolation; needsInterpolation = re.MatchString(retString) {
 		retString = re.ReplaceAllStringFunc(retString, func(m string) string {
+			var ret string
+
+			if strings.HasPrefix(m, "{") {
+				ret = ""
+			} else {
+				ret = fmt.Sprintf("%c", m[0])
+				m = m[1:]
+			}
+
 			if val, ok := vars[m[1:len(m)-1]]; !ok {
 				err = fmt.Errorf("%s is not a valid interpolation var", m)
 			} else {
-				return val
+				return fmt.Sprintf("%s%s", ret, val)
 			}
 
 			return ""

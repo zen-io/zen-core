@@ -28,6 +28,54 @@ func FileHash(path string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
+func Link(from, to string) error {
+	info, err := os.Stat(from)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		if err := os.MkdirAll(to, os.ModePerm); err != nil {
+			return err
+		}
+
+		dir, err := os.Open(from)
+		if err != nil {
+			return err
+		}
+		defer dir.Close()
+
+		// Read source directory contents
+		fileInfos, err := dir.Readdir(-1)
+		if err != nil {
+			return err
+		}
+
+		for _, fileInfo := range fileInfos {
+			srcPath := filepath.Join(from, fileInfo.Name())
+			destPath := filepath.Join(to, fileInfo.Name())
+
+			if fileInfo.IsDir() {
+				// Copy subdirectory recursively
+				if err := Link(srcPath, destPath); err != nil {
+					return err
+				}
+			} else {
+				// Copy file
+				os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
+				if err := os.Symlink(srcPath, destPath); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		os.MkdirAll(filepath.Dir(to), os.ModePerm)
+		return os.Symlink(from, to)
+	}
+
+	return nil
+}
+
 func Copy(from, to string) error {
 	info, err := os.Stat(from)
 	if err != nil {
