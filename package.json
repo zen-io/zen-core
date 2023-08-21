@@ -1,0 +1,12 @@
+{
+  "name": "@zen-io/core",
+  "module": "index.ts",
+  "type": "module",
+  "main": "index.ts",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
