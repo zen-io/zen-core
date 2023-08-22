@@ -6,11 +6,6 @@
     "lib": [
       "ESNext"
     ],
-    "paths": {
-      "environments": [
-        "./src/environments/*.ts"
-      ]
-    },
     "module": "esnext",
     "target": "esnext",
     "moduleResolution": "bundler",
